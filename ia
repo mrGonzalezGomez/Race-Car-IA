@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+import sys
+sys.path.insert(0, './python3/')
+from python3.napi import *
+
+DIST = 800
+ANGLE = 0.22
+DANGER = 400
+N4S = Napi()
+
+def getSpeed():
+    speed = 0.55
+    return speed
+
+def diff(a, b):
+    return abs(a - b)
+
+def getValues(speed, middle):
+
+    alpha = 0
+
+    left  = (N4S.getRayAt(10) + N4S.getRayAt(11) + N4S.getRayAt(12)) / 3
+    right = (N4S.getRayAt(21) + N4S.getRayAt(20) + N4S.getRayAt(19)) / 3
+
+    if middle < DIST:
+        if left < right: #and diff(left, right) > 100:
+            alpha = -ANGLE
+        if right < left: # and diff(right, left) > 100:
+            alpha = ANGLE
+
+    left  = N4S.getRayAt(0)
+    right = N4S.getRayAt(31)
+
+    if middle < DANGER:
+        speed -= 0.1
+        N4S.debug("DANGER")
+
+        if left < 175:
+            alpha = -ANGLE * 1.2
+        if right < 175:
+            alpha = ANGLE * 1.2
+
+    if left < 100:
+        alpha = -ANGLE
+    if right < 100:
+        alpha = ANGLE
+
+    if left == 0 or right == 0:
+        speed = -4
+        alpha *= -1
+
+    N4S.debug("Left: " + str(left) + " Right: " + str(right) + " Alpha: " + str(alpha) + " Middle: " + str(middle))
+
+    return (alpha, speed)
+
+def my_custom_update():
+    speed   =   getSpeed()
+    middle  =   N4S.getRayAt(15)
+    (alpha, speed) = getValues(speed, middle)
+
+    if middle < 50:
+        speed = -4
+    N4S.setThrust( speed, refresh = True )
+    N4S.setDirection( alpha, refresh = True )
+
+if __name__ == '__main__':
+    N4S.start(my_custom_update)
